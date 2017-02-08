@@ -1,0 +1,349 @@
+//
+//  LDModel+FMDB.m
+//  version
+//
+//  Created by lindechun on 17/2/6.
+//  Copyright © 2017年 lindechun. All rights reserved.
+//
+
+#import "LDModel+FMDB.h"
+#import <objc/runtime.h>
+
+@implementation FMDatabase (sharedFMDatabase)
+
++ (instancetype)sharedFMDatabase {
+    
+    static FMDatabase *database;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        database = [[self alloc] initWithPath:[NSString stringWithFormat:@"%@/%@.db",NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject,[NSBundle mainBundle].infoDictionary[@"CFBundleName"]]];
+    });
+    return database;
+}
+
+@end
+
+const char *keyDatabase = "key.database";
+
+@implementation LDModel (FMDB)
+
+#pragma mark --建表--
+//如果没有对应的表
++ (void)createTableIfNotExist {
+    
+    FMDatabase *database = [FMDatabase sharedFMDatabase];
+    BOOL open = [database open];
+    if (open) {
+        
+        NSString *sql = [self createTableSql];
+        BOOL success = [database executeUpdate:sql];
+        if (success) {
+            
+        }else {
+            NSLog(@"%@",database.lastErrorMessage);
+        }
+    }else {
+        
+        NSLog(@"%@",database.lastErrorMessage);
+    }
+    
+    [database close];
+}
+//创建和类对应表的sql语句
++ (NSString *)createTableSql {
+    
+    NSMutableString *sql = [[NSMutableString alloc] initWithFormat:@"create table if not exists %@ ",[self class]];
+    
+    unsigned int ivars_count;
+    Ivar *ivars = class_copyIvarList([self class], &ivars_count);
+    
+    NSMutableArray<NSString *> *tempArray = [[NSMutableArray alloc] init];
+    for (int i=0; i<ivars_count; i++) {
+        
+        Ivar ivar = ivars[i];
+        char *tempType;
+        if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSNumber\"")==0) {
+            tempType = "integer";
+        }else if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSString\"")==0) {
+            tempType = "varchar(256)";
+        }else {
+            [NSException raise:@"类里面包含不支持的数据类型" format:@""];
+        }
+        [tempArray addObject:[NSString stringWithFormat:@"%s %s",ivar_getName(ivar),tempType]];
+    }
+    [sql appendFormat:@"(%@)",[tempArray componentsJoinedByString:@","]];
+    return sql;
+}
+#pragma mark --删表--
+//删除类对应的表，实际开发可能用处不大，用于测试
++ (void)deleteTableIfExists {
+    
+    FMDatabase *database = [FMDatabase sharedFMDatabase];
+    
+    BOOL open = [database open];
+    if (open) {
+        
+        NSString *sql = [NSString stringWithFormat:@"drop table if exists %@",[self class]];
+        BOOL success = [database executeUpdate:sql];
+        if (success) {
+            
+        }else {
+            NSLog(@"%@",database.lastErrorMessage);
+        }
+    }else {
+        
+        NSLog(@"%@",database.lastErrorMessage);
+    }
+    
+    [database close];
+}
+
+#pragma mark --插入--
+//将对象信息插入表中
+- (void)insertIntoTable {
+    
+    BOOL open = [self.database open];
+    if (open) {
+        
+        NSString *sql = [self insertIntoTableSql];
+        NSError *error = nil;
+        
+        BOOL success = [self.database executeUpdate:sql values:[self values] error:&error];
+        
+        if (error) {
+            NSLog(@"%@",error);
+        }
+        
+        if (success) {
+            
+        }else {
+            NSLog(@"%@",self.database.lastErrorMessage);
+        }
+    }else {
+        
+        NSLog(@"%@",self.database.lastErrorMessage);
+    }
+    
+    [self.database close];
+}
+//插入一条记录sql
+- (NSString *)insertIntoTableSql {
+    
+    NSMutableString *sql = [[NSMutableString alloc] initWithFormat:@"insert into %@",[self class]];
+    
+    unsigned int ivars_count;
+    Ivar *ivars = class_copyIvarList([self class], &ivars_count);
+    
+    NSMutableArray<NSString *> *keywords = [[NSMutableArray alloc] init];
+    NSMutableArray<NSString *> *placeholders = [[NSMutableArray alloc] init];
+    
+    for (int i=0; i<ivars_count; i++) {
+        
+        Ivar ivar = ivars[i];
+        [keywords addObject:[NSString stringWithFormat:@"%s",ivar_getName(ivar)]];
+        [placeholders addObject:@"?"];
+    }
+    [sql appendFormat:@"(%@) values(%@)",[keywords componentsJoinedByString:@","],[placeholders componentsJoinedByString:@","]];
+    // return @"insert into 表名(字段1,字段2,...) values(?,?,...)"
+    return sql;
+}
+
+#pragma mark --修改--
+
+- (void)updateWherePropertyName:(NSString *)name equal:(id)value {
+    
+    BOOL open = [self.database open];
+    if (open) {
+        
+        NSString *sql = [[self class] updateSqlWithKey:[NSString stringWithFormat:@"_%@",name]];
+        NSError *error = nil;
+        
+        NSMutableArray *tempArr = [self values];
+        [tempArr addObject:value];
+        BOOL success = [self.database executeUpdate:sql values:tempArr error:&error];
+        
+        if (error) {
+            NSLog(@"%@",error);
+        }
+        
+        if (success) {
+            
+        }else {
+            NSLog(@"%@",self.database.lastErrorMessage);
+        }
+    }else {
+        
+        NSLog(@"%@",self.database.lastErrorMessage);
+    }
+    
+    [self.database close];
+}
+
++ (NSString *)updateSqlWithKey:(NSString *)key {
+    
+    NSMutableString *sql = [[NSMutableString alloc] initWithFormat:@"update %@ set ",[self class]];
+    
+    unsigned int ivars_count;
+    Ivar *ivars = class_copyIvarList([self class], &ivars_count);
+    
+    NSMutableArray<NSString *> *setCompenents = [[NSMutableArray alloc] init];
+    
+    for (int i=0; i<ivars_count; i++) {
+        
+        Ivar ivar = ivars[i];
+        [setCompenents addObject:[NSString stringWithFormat:@"%@ = ?",[NSString stringWithFormat:@"%s",ivar_getName(ivar)]]];
+    }
+    [sql appendFormat:@"%@ where %@ = ?",[setCompenents componentsJoinedByString:@","],key];
+    //return @"update %@ set 字段1 ＝ ?,字段2 ＝ ? ... where key = ?"
+    return sql;
+}
+
+#pragma mark --删除记录--
+
++ (void)deleteInstanceWithPropertyName:(NSString *)name value:(id)value {
+    
+    FMDatabase *database = [FMDatabase sharedFMDatabase];
+    BOOL open = [database open];
+    if (open) {
+        
+        NSString *sql = [self deletesqlWithKey:name];
+        NSError *error = nil;
+        
+        BOOL success = [database executeUpdate:sql,value];
+        
+        if (error) {
+            NSLog(@"%@",error);
+        }
+        
+        if (success) {
+            
+        }else {
+            NSLog(@"%@",database.lastErrorMessage);
+        }
+    }else {
+        
+        NSLog(@"%@",database.lastErrorMessage);
+    }
+    
+    [database close];
+}
+
++ (NSString *)deletesqlWithKey:(NSString *)key {
+    
+    return [NSString stringWithFormat:@"delete from %@ where _%@ = ?",self,key];
+}
+
+#pragma mark --通用--
+//获取对象中的value信息
+- (NSMutableArray *)values {
+    
+    NSMutableArray *values = [[NSMutableArray alloc] init];
+    
+    unsigned int ivars_count;
+    Ivar *ivars = class_copyIvarList([self class], &ivars_count);
+    
+    for (int i=0; i<ivars_count; i++) {
+        
+        Ivar ivar = ivars[i];
+        [values addObject:object_getIvar(self, ivar)];
+    }
+    
+    return values;
+}
+//获取存储在表中的所有该类实例
++ (NSMutableArray *)allInstances {
+    
+    NSString *sql = [NSString stringWithFormat:@"select * from %@",self];
+    FMDatabase *database = [FMDatabase sharedFMDatabase];
+    NSMutableArray *instances = [[NSMutableArray alloc] init];
+    
+    BOOL open = [database open];
+    if (open) {
+        
+        FMResultSet *set = [database executeQuery:sql];
+        while ([set next]) {
+            
+            LDModel *model = [[self alloc] init];
+            unsigned int ivar_count;
+            Ivar *ivars = class_copyIvarList(self, &ivar_count);
+            for (int i=0; i<ivar_count; i++) {
+                Ivar ivar = ivars[i];
+                
+                if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSNumber\"")==0) {
+                    
+                    object_setIvar(model, ivar, @([set longLongIntForColumn:[NSString stringWithFormat:@"%s",ivar_getName(ivar)]]));
+                }else if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSString\"")==0) {
+                    
+                    object_setIvar(model, ivar, [set stringForColumn:[NSString stringWithFormat:@"%s",ivar_getName(ivar)]]);
+                }else {
+                    [NSException raise:@"类里面包含不支持的数据类型" format:@""];
+                }
+            }
+            [instances addObject:model];
+        }
+    }else {
+        
+        NSLog(@"%@",database.lastErrorMessage);
+    }
+    
+    [database close];
+    return instances;
+}
+//获取某一列的最大值
++ (id)maxModelWithPropertyName:(NSString *)name {
+    
+    NSString *sql = [self maxSqlWithKey:name];
+    FMDatabase *database = [FMDatabase sharedFMDatabase];
+    NSString *tempStr = [NSString stringWithFormat:@"_%@",name];
+    id maxValue;
+    
+    BOOL open = [database open];
+    if (open) {
+        
+        FMResultSet *set = [database executeQuery:sql];
+        while ([set next]) {
+            
+            Ivar ivar = class_getInstanceVariable(self, [tempStr cStringUsingEncoding:NSUTF8StringEncoding]);
+            if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSNumber\"")==0) {
+                
+                maxValue = @([set longLongIntForColumn:[NSString stringWithFormat:@"%s",ivar_getName(ivar)]]);
+            }else if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSString\"")==0) {
+                
+                maxValue = [set stringForColumn:[NSString stringWithFormat:@"%s",ivar_getName(ivar)]];
+            }else {
+                [NSException raise:@"类里面包含不支持的数据类型" format:@""];
+            }
+            break;
+        }
+    }else {
+        
+        NSLog(@"%@",database.lastErrorMessage);
+    }
+    
+    [database close];
+    return maxValue;
+}
+//获取某一列最大值sql
++ (NSString *)maxSqlWithKey:(NSString *)key {
+    
+    return [NSString stringWithFormat:@"select MAX(_%@) as _%@ from %@",key,key,self];
+}
+
+#pragma mark --lazyInit--
+
+- (FMDatabase *)database {
+    
+    FMDatabase *_database = objc_getAssociatedObject(self, keyDatabase);
+    if (!_database) {
+        self.database = [FMDatabase sharedFMDatabase];
+        _database = objc_getAssociatedObject(self, keyDatabase);
+    }
+    return _database;
+}
+
+- (void)setDatabase:(FMDatabase *)database {
+    
+    objc_setAssociatedObject(self, keyDatabase, database, OBJC_ASSOCIATION_ASSIGN);
+}
+
+@end
