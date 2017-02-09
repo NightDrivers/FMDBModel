@@ -29,6 +29,10 @@ static NSString *studentCellIden = @"student.cell.iden";
     [Student createTableIfNotExist];
     [self synchronizeDatabaseAndUI];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(synchronizeDatabaseAndUI) name:StudentTableChangeNotification object:nil];
+    
+    for (Student *student in [Student instancesPropertyName:@"age" eaqualTo:@12]) {
+        NSLog(@"%@",student);
+    }
 }
 
 - (void)configureTableView {

@@ -233,23 +233,7 @@ const char *keyDatabase = "key.database";
     return [NSString stringWithFormat:@"delete from %@ where _%@ = ?",self,key];
 }
 
-#pragma mark --通用--
-//获取对象中的value信息
-- (NSMutableArray *)values {
-    
-    NSMutableArray *values = [[NSMutableArray alloc] init];
-    
-    unsigned int ivars_count;
-    Ivar *ivars = class_copyIvarList([self class], &ivars_count);
-    
-    for (int i=0; i<ivars_count; i++) {
-        
-        Ivar ivar = ivars[i];
-        [values addObject:object_getIvar(self, ivar)];
-    }
-    
-    return values;
-}
+#pragma mark --查找--
 //获取存储在表中的所有该类实例
 + (NSMutableArray *)allInstances {
     
@@ -288,6 +272,63 @@ const char *keyDatabase = "key.database";
     
     [database close];
     return instances;
+}
+
++ (NSMutableArray *)instancesPropertyName:(NSString *)name eaqualTo:(id)value {
+    
+    NSString *sql = [NSString stringWithFormat:@"select * from %@ where _%@ = ?",self,name];
+    
+    FMDatabase *database = [FMDatabase sharedFMDatabase];
+    NSMutableArray *instances = [[NSMutableArray alloc] init];
+    
+    BOOL open = [database open];
+    if (open) {
+        
+        FMResultSet *set = [database executeQuery:sql,value];
+        while ([set next]) {
+            
+            LDModel *model = [[self alloc] init];
+            unsigned int ivar_count;
+            Ivar *ivars = class_copyIvarList(self, &ivar_count);
+            for (int i=0; i<ivar_count; i++) {
+                Ivar ivar = ivars[i];
+                
+                if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSNumber\"")==0) {
+                    
+                    object_setIvar(model, ivar, @([set longLongIntForColumn:[NSString stringWithFormat:@"%s",ivar_getName(ivar)]]));
+                }else if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSString\"")==0) {
+                    
+                    object_setIvar(model, ivar, [set stringForColumn:[NSString stringWithFormat:@"%s",ivar_getName(ivar)]]);
+                }else {
+                    [NSException raise:@"类里面包含不支持的数据类型" format:@""];
+                }
+            }
+            [instances addObject:model];
+        }
+    }else {
+        
+        NSLog(@"%@",database.lastErrorMessage);
+    }
+    
+    [database close];
+    return instances;
+}
+#pragma mark --通用--
+//获取对象中的value信息
+- (NSMutableArray *)values {
+    
+    NSMutableArray *values = [[NSMutableArray alloc] init];
+    
+    unsigned int ivars_count;
+    Ivar *ivars = class_copyIvarList([self class], &ivars_count);
+    
+    for (int i=0; i<ivars_count; i++) {
+        
+        Ivar ivar = ivars[i];
+        [values addObject:object_getIvar(self, ivar)];
+    }
+    
+    return values;
 }
 //获取某一列的最大值
 + (id)maxModelWithPropertyName:(NSString *)name {

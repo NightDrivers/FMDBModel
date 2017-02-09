@@ -15,7 +15,7 @@
 
 @end
 /**
- *  子类属性暂时只支持NSString、NSNumber
+ *  子类属性暂时只支持NSString、NSNumber,建表后修改数据模型后应该删表重新建表，不然会引起未知错误
  */
 @interface LDModel (FMDB)
 
@@ -31,6 +31,8 @@
 - (void)updateWherePropertyName:(NSString *)name equal:(id)value;
 //如果数据库内没有对应的表，就创建一张
 + (void)createTableIfNotExist;
+//删表
++ (void)deleteTableIfExists;
 /**
  *  获取表中属性值最大值
  *
@@ -48,5 +50,6 @@
 + (void)deleteInstanceWithPropertyName:(NSString *)name value:(id)value;
 //返回所有对象
 + (NSMutableArray *)allInstances;
-
+//获取列值为value的记录
++ (NSMutableArray *)instancesPropertyName:(NSString *)name eaqualTo:(id)value;
 @end
