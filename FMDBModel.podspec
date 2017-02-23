@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "FMDBModel"
-  s.version      = "0.0.1-2"
+  s.version      = "0.0.1-3"
   s.summary      = "虚拟数据模型，对FMDB进行封装，子类能进行基本的数据库操作"
   s.homepage     = "https://github.com/lindechun1994/FMDBModel"
   s.license      = "MIT"
@@ -10,5 +10,5 @@ Pod::Spec.new do |s|
   s.source_files  = "Pod/*.{h,m}"
   s.requires_arc = true
   s.dependency 'FMDB', '~> 2.6.2'
-  s.dependency 'LDFramework', :git => 'https://github.com/lindechun1994/LDFramework.git', :tag => '0.1.3'
+  s.dependency 'LDFramework', '~> 0.2.0'
 end
