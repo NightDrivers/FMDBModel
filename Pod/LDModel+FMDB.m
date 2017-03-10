@@ -246,7 +246,19 @@ const char *keyDatabase = "key.database";
     NSMutableArray *values = [[NSMutableArray alloc] init];
     
     [self.class traverseIvarWithExecute:^(Ivar ivar) {
-        [values addObject:object_getIvar(self, ivar)];
+        id value = object_getIvar(self, ivar);
+        if (!value) {
+            if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSNumber\"")==0) {
+                
+                value = @0;
+            }else if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSString\"")==0) {
+                
+                value = @"";
+            }else {
+                [NSException raise:@"类里面包含不支持的数据类型" format:@""];
+            }
+        }
+        [values addObject:value];
     }];
     
     return values;
