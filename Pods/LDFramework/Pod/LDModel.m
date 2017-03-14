@@ -46,6 +46,7 @@
             
         }
     }
+    free(ivar);
 }
 
 - (instancetype)initWithCoder:(NSCoder *)aDecoder {
@@ -61,6 +62,7 @@
             id value = [aDecoder decodeObjectForKey:ivar_string_name];
             object_setIvar(self, temp, value);
         }
+        free(ivar);
     }
     return self;
 }
@@ -74,6 +76,7 @@
         id modelValue = object_getIvar(model, temp);
         object_setIvar(self, temp, modelValue);
     }
+    free(ivar);
 }
 
 - (void)encodeWithCoder:(NSCoder *)aCoder {
@@ -87,6 +90,7 @@
         id value = object_getIvar(self, temp);
         [aCoder encodeObject:value forKey:ivar_string_name];
     }
+    free(ivar);
 }
 
 - (NSString *)description {
@@ -101,6 +105,7 @@
         NSString *str = [NSString stringWithFormat:@"-[%@]-[%@]-\n",tempString,value];
         [mstr appendString:str];
     }
+    free(ivar);
     return mstr;
 }
 
@@ -119,6 +124,7 @@
         }
         [mDic setValue:value forKey:[tempString substringFromIndex:1]];
     }
+    free(ivar);
     return mDic;
 }
 
@@ -130,6 +136,7 @@
         Ivar temp = ivar[i];
         object_setIvar(self, temp, nil);
     }
+    free(ivar);
 }
 
 

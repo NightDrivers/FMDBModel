@@ -13,7 +13,7 @@
  
  注意：如果提供的字典中的key与系统关键字冲突，可以转为大写，用字典给实例设置值时是大小写模糊的.
         如：字典中的key为 id 属性名为ID的属性依然可以取到对应的值.切忌不要再一个子类中同时存在uppercaseString值相同的字符串.
- 
+
  */
 @interface LDModel : NSObject<NSCoding>
 

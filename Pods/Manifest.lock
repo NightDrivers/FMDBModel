@@ -2,26 +2,16 @@ PODS:
   - FMDB (2.6.2):
     - FMDB/standard (= 2.6.2)
   - FMDB/standard (2.6.2)
-  - LDFramework (0.1.3)
+  - LDFramework (0.2.0)
 
 DEPENDENCIES:
   - FMDB (~> 2.6.2)
-  - LDFramework (from `https://github.com/lindechun1994/LDFramework.git`, tag `0.1.3`)
-
-EXTERNAL SOURCES:
-  LDFramework:
-    :git: https://github.com/lindechun1994/LDFramework.git
-    :tag: 0.1.3
-
-CHECKOUT OPTIONS:
-  LDFramework:
-    :git: https://github.com/lindechun1994/LDFramework.git
-    :tag: 0.1.3
+  - LDFramework (~> 0.2.0)
 
 SPEC CHECKSUMS:
   FMDB: 854a0341b4726e53276f2a8996f06f1b80f9259a
-  LDFramework: 3817ada238b5103f4f2dc379d77d1046561e7ce9
+  LDFramework: c2c163ff3c073ffd1337dacbe2a10598a01ea08e
 
-PODFILE CHECKSUM: aadbb9e6ee3f0f367c02e2cee308aa82dec38e15
+PODFILE CHECKSUM: c2cdc65180ea936371dffaf49a06b664306377ea
 
-COCOAPODS: 1.0.1
+COCOAPODS: 1.2.0
