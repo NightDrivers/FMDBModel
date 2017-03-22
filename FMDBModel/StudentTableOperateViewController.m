@@ -63,7 +63,7 @@
     Student *student = [[Student alloc] init];
     student.ID = @(self.idTextField.text.integerValue);
     student.name = self.nameTextField.text;
-    student.age = @(self.ageTextField.text.intValue);
+    student.age = @(self.ageTextField.text.longLongValue);
     student.chineseScore = @(self.chineseTextField.text.intValue);
     student.mathScore = @(self.mathTextField.text.intValue);
     student.englishScore = @(self.englishTextField.text.intValue);

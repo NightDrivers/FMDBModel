@@ -2,16 +2,13 @@ PODS:
   - FMDB (2.6.2):
     - FMDB/standard (= 2.6.2)
   - FMDB/standard (2.6.2)
-  - LDFramework (0.2.0)
 
 DEPENDENCIES:
   - FMDB (~> 2.6.2)
-  - LDFramework (~> 0.2.0)
 
 SPEC CHECKSUMS:
   FMDB: 854a0341b4726e53276f2a8996f06f1b80f9259a
-  LDFramework: c2c163ff3c073ffd1337dacbe2a10598a01ea08e
 
-PODFILE CHECKSUM: c2cdc65180ea936371dffaf49a06b664306377ea
+PODFILE CHECKSUM: 963736f1b15e5815d96881250e4f0076c0ecaede
 
 COCOAPODS: 1.2.0

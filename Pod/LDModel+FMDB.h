@@ -6,7 +6,7 @@
 //  Copyright © 2017年 lindechun. All rights reserved.
 //
 
-#import <LDFramework/LDFramework.h>
+#import "LDModel.h"
 #import <FMDB/FMDB.h>
 
 @interface FMDatabase (sharedFMDatabase)

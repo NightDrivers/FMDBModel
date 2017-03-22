@@ -183,7 +183,7 @@ const char *keyDatabase = "key.database";
                 
                 if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSNumber\"")==0) {
                     
-                    object_setIvar(model, ivar, @([set longLongIntForColumn:[NSString stringWithFormat:@"%s",ivar_getName(ivar)]]));
+                    object_setIvar(model, ivar, @([set doubleForColumn:[NSString stringWithFormat:@"%s",ivar_getName(ivar)]]));
                 }else if (strcmp(ivar_getTypeEncoding(ivar), "@\"NSString\"")==0) {
                     
                     object_setIvar(model, ivar, [set stringForColumn:[NSString stringWithFormat:@"%s",ivar_getName(ivar)]]);

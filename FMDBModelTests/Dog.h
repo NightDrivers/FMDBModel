@@ -6,7 +6,7 @@
 //  Copyright © 2017年 lindechun. All rights reserved.
 //
 
-#import <LDFramework/LDFramework.h>
+#import "LDModel.h"
 #import "LDModel+FMDB.h"
 
 @interface Dog : LDModel
